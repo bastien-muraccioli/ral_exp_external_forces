@@ -28,7 +28,7 @@ void RALExpController_JointLimPose::start(mc_control::fsm::Controller & ctl_)
   ctl.compPostureTask->stiffness(0.2);
   ctl.compPostureTask->target(ctl.postureJointLim);
   ctl.compPostureTask->makeCompliant(false);
-  ctl.solver().removeTask(ctl.eeTask);
+  ctl.solver().removeTask(ctl.compEETask);
 
   ctl.datastore().assign<std::string>("ControlMode", "Position");
   mc_rtc::log::success("[RALExpController] Switched to Sensor Testing state - Position controlled");

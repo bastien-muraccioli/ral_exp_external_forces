@@ -1,6 +1,9 @@
 #include "RALExpController_NSCompliant.h"
+#include <mc_tasks/PositionTask.h>
 
+#include <Eigen/src/Core/Matrix.h>
 #include <RALExpController/RALExpController.h>
+#include <memory>
 
 void RALExpController_NSCompliant::configure(const mc_rtc::Configuration & config) {}
 
@@ -25,17 +28,18 @@ void RALExpController_NSCompliant::start(mc_control::fsm::Controller & ctl_)
   ctl.compPostureTask->damping(5.0);
   ctl.compPostureTask->weight(1);
 
-  ctl.eeTask->reset();
-  ctl.eeTask->positionTask->weight(10000);
-  ctl.eeTask->positionTask->stiffness(100);
-  ctl.eeTask->positionTask->position(Eigen::Vector3d(0.68, 0.0, 0.45));
-  ctl.eeTask->orientationTask->weight(10000);
-  ctl.eeTask->orientationTask->stiffness(100);
-  ctl.eeTask->orientationTask->orientation(Eigen::Quaterniond(-1, 4, 1, 4).normalized().toRotationMatrix());
-  ctl.solver().addTask(ctl.eeTask);
+  ctl.compEETask->reset();
+  ctl.compEETask->positionTask->weight(10000);
+  ctl.compEETask->positionTask->stiffness(100);
+  ctl.compEETask->positionTask->position(Eigen::Vector3d(0.68, 0.0, 0.45));
+  ctl.compEETask->orientationTask->weight(10000);
+  ctl.compEETask->orientationTask->stiffness(100);
+  ctl.compEETask->orientationTask->orientation(Eigen::Quaterniond(-1, 4, 1, 4).normalized().toRotationMatrix());
+  ctl.solver().addTask(ctl.compEETask);
 
   ctl.compPostureTask->makeCompliant(true);
 
+  ctl.sequenceOutput = "A";
   ctl.waitingForInput = true;
 
   ctl.datastore().assign<std::string>("ControlMode", "Torque");

@@ -2,7 +2,7 @@
 
 #include <mc_control/fsm/State.h>
 
-struct RALExpController_NSNonCompliant : mc_control::fsm::State
+struct RALExpController_HVelLimitNoEF : mc_control::fsm::State
 {
 
   void configure(const mc_rtc::Configuration & config) override;
@@ -14,4 +14,9 @@ struct RALExpController_NSNonCompliant : mc_control::fsm::State
   void teardown(mc_control::fsm::Controller & ctl) override;
 
 private:
+  double elapsedTime_;
+  double jointVel;
+  double upperLimit;
+  double lowerLimit;
+  double maxLimitCross_;
 };

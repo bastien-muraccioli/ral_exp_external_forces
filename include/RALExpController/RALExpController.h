@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mc_control/fsm/Controller.h>
-#include <mc_tasks/EndEffectorTask.h>
+#include <mc_tasks/CompliantEndEffectorTask.h>
 #include <mc_tasks/CompliantPostureTask.h>
 
 #include <RALExpController/api.h>
@@ -18,7 +18,7 @@ struct RALExpController_DLLAPI RALExpController : public mc_control::fsm::Contro
   void reset(const mc_control::ControllerResetData & reset_data) override;
 
   std::shared_ptr<mc_tasks::CompliantPostureTask> compPostureTask;
-  std::shared_ptr<mc_tasks::EndEffectorTask> eeTask;
+  std::shared_ptr<mc_tasks::CompliantEndEffectorTask> compEETask;
 
   bool moveNextState;
   std::map<std::string, std::vector<double>> postureVelLimit;

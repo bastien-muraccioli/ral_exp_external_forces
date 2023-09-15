@@ -1,10 +1,8 @@
 #pragma once
 
 #include <mc_control/fsm/State.h>
-#include <mc_tasks/PositionTask.h>
-#include <memory>
 
-struct RALExpController_NSCompliant : mc_control::fsm::State
+struct RALExpController_NonCompliant : mc_control::fsm::State
 {
 
   void configure(const mc_rtc::Configuration & config) override;

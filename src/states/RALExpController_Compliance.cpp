@@ -25,6 +25,20 @@ void RALExpController_Compliance::start(mc_control::fsm::Controller & ctl_)
   ctl.compPostureTask->damping(4.0);
   ctl.compPostureTask->weight(1);
 
+  ctl.compEETask->reset();
+  ctl.compEETask->positionTask->weight(10000);
+  ctl.compEETask->positionTask->stiffness(10);
+  ctl.compEETask->positionTask->position(Eigen::Vector3d(0.68, 0.0, 0.45));
+  ctl.compEETask->orientationTask->weight(10000);
+  ctl.compEETask->orientationTask->stiffness(10);
+  ctl.compEETask->orientationTask->orientation(Eigen::Quaterniond(-1, 4, 1, 4).normalized().toRotationMatrix());
+  ctl.solver().addTask(ctl.compEETask);
+
+  ctl.compPostureTask->makeCompliant(true);
+  ctl.compEETask->makeCompliant(true);
+
+  ctl.waitingForInput = true;
+
   ctl.datastore().assign<std::string>("ControlMode", "Torque");
   mc_rtc::log::success("[RALExpController] Switched to Sensor Testing state - Position controlled");
 }
@@ -32,8 +46,14 @@ void RALExpController_Compliance::start(mc_control::fsm::Controller & ctl_)
 bool RALExpController_Compliance::run(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
-  output("OK");
-  return true;
+
+  if(not ctl.waitingForInput)
+  {
+    output("OK");
+    return true;
+  }
+
+  return false;
 }
 
 void RALExpController_Compliance::teardown(mc_control::fsm::Controller & ctl_)

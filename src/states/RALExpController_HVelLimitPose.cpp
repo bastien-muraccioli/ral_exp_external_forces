@@ -1,10 +1,10 @@
-#include "RALExpController_VelLimitPose.h"
+#include "RALExpController_HVelLimitPose.h"
 
 #include <RALExpController/RALExpController.h>
 
-void RALExpController_VelLimitPose::configure(const mc_rtc::Configuration & config) {}
+void RALExpController_HVelLimitPose::configure(const mc_rtc::Configuration & config) {}
 
-void RALExpController_VelLimitPose::start(mc_control::fsm::Controller & ctl_)
+void RALExpController_HVelLimitPose::start(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
   ctl.solver().removeConstraintSet(ctl.dynamicsConstraint);
@@ -34,7 +34,7 @@ void RALExpController_VelLimitPose::start(mc_control::fsm::Controller & ctl_)
   mc_rtc::log::success("[RALExpController] Switched to Sensor Testing state - Position controlled");
 }
 
-bool RALExpController_VelLimitPose::run(mc_control::fsm::Controller & ctl_)
+bool RALExpController_HVelLimitPose::run(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
   if(ctl.compPostureTask->eval().norm() < 0.01)
@@ -51,9 +51,9 @@ bool RALExpController_VelLimitPose::run(mc_control::fsm::Controller & ctl_)
   return false;
 }
 
-void RALExpController_VelLimitPose::teardown(mc_control::fsm::Controller & ctl_)
+void RALExpController_HVelLimitPose::teardown(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
 }
 
-EXPORT_SINGLE_STATE("RALExpController_VelLimitPose", RALExpController_VelLimitPose)
+EXPORT_SINGLE_STATE("RALExpController_HVelLimitPose", RALExpController_HVelLimitPose)

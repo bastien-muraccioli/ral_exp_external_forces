@@ -39,14 +39,14 @@ states:
     StepByStep: true
       
     transitions:
-      - [RALExpController_SensorHighBoth, OK, RALExpController_SensorHighResidual, Strict]
-      - [RALExpController_SensorHighResidual, OK, RALExpController_SensorLowBoth, Strict]
-      - [RALExpController_SensorLowBoth, OK, RALExpController_SensorLowResidual, Strict]
-      - [RALExpController_SensorLowResidual, OK, RALExpController_NSNonCompliant, Strict]
-      - [RALExpController_NSNonCompliant, OK, RALExpController_NSCompliant, Strict]
-      - [RALExpController_NSCompliant, OK, RALExpController_VelLimitPose, Strict]
-      - [RALExpController_VelLimitPose, OK, RALExpController_VelLimitEF, Strict]
-      - [RALExpController_VelLimitEF, OK, RALExpController_VelLimitNoEF, Strict]
+      - [RALExpController_SensorHighBoth, OK, RALExpController_SensorHighResidual, Auto]
+      - [RALExpController_SensorHighResidual, OK, RALExpController_SensorLowBoth, Auto]
+      - [RALExpController_SensorLowBoth, OK, RALExpController_SensorLowResidual, Auto]
+      - [RALExpController_SensorLowResidual, OK, RALExpController_NSNonCompliant, Auto]
+      - [RALExpController_NSNonCompliant, OK, RALExpController_NSCompliant, Auto]
+      - [RALExpController_NSCompliant, OK, RALExpController_VelLimitPose, Auto]
+      - [RALExpController_VelLimitPose, OK, RALExpController_VelLimitEF, Auto]
+      - [RALExpController_VelLimitEF, OK, RALExpController_VelLimitNoEF, Auto]
 
   RALExp_FSM_DropExp:
     base: Meta
@@ -67,27 +67,30 @@ states:
       # - [RALExpController_JointLimComp, B, RALExpController_JointLimPose, Auto]
       # - [RALExpController_JointLimComp, FINISHED, RALExpController_Initial, Auto]
 
-  RALExp_FSM_HierarchyExp:
+  RALExp_FSM_ComplianceExp:
     base: Meta
     Managed: false
     StepByStep: true
 
     transitions:
-      - [RALExpController_HVelLimitPose, A, RALExpController_HVelLimitEF, Auto]
-      - [RALExpController_HVelLimitEF, A, RALExpController_HVelLimitPose, Auto]
-      - [RALExpController_HVelLimitEF, FINISHED, RALExpController_HVelLimitPose, Auto]
-      - [RALExpController_HVelLimitPose, B, RALExpController_HVelLimitNoEF, Auto]
-      - [RALExpController_HVelLimitNoEF, B, RALExpController_HVelLimitPose, Auto]
-      - [RALExpController_HVelLimitNoEF, FINISHED, RALExpController_Initial, Auto]
+      - [RALExpController_NonCompliant, OK, RALExpController_NSCompliant, Auto]
+      - [RALExpController_NSCompliant, OK, RALExpController_Compliance, Auto]
+      - [RALExpController_Compliance, OK, RALExpController_Initial, Auto]
 
 # Transitions map
 transitions:
-  - [RALExpController_Initial, MAIN, RALExp_FSM_MainExp, Strict]
-  - [RALExpController_Initial, DROPS, RALExp_FSM_DropExp, Strict]
-  - [RALExpController_Initial, HIERARCHY, RALExp_FSM_HierarchyExp, Strict]
+  - [RALExpController_Initial, MAIN, RALExp_FSM_MainExp, Auto]
+  - [RALExpController_Initial, DROPS, RALExp_FSM_DropExp, Auto]
+  - [RALExpController_Initial, COMPLY, RALExp_FSM_ComplianceExp, Auto]
+  - [RALExp_FSM_MainExp, OK, RALExpController_Initial, Auto]
+  - [RALExp_FSM_DropExp, OK, RALExpController_Initial, Auto]
+  - [RALExp_FSM_ComplianceExp, OK, RALExpController_Initial, Auto]
 
 # Initial state
-init: RALExpController_Initial
+# init: RALExpController_Initial
+init: RALExp_FSM_MainExp
+
+Plugins: [ PassivityTorqueFeedback, ExternalForcesEstimator ]
 
 ObserverPipelines:
 - name: Pipeline

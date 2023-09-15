@@ -29,7 +29,7 @@ void RALExpController_VelLimitEF::start(mc_control::fsm::Controller & ctl_)
   ctl.compPostureTask->stiffness(10.0);
   ctl.compPostureTask->target(ctl.postureVelLimit);
   ctl.compPostureTask->makeCompliant(true);
-  ctl.solver().removeTask(ctl.eeTask);
+  ctl.solver().removeTask(ctl.compEETask);
 
   elapsedTime_ = 0;
   ctl.velLimitCounter++;

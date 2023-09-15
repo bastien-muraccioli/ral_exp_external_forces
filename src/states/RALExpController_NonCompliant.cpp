@@ -1,10 +1,10 @@
-#include "RALExpController_NSNonCompliant.h"
+#include "RALExpController_NonCompliant.h"
 
 #include <RALExpController/RALExpController.h>
 
-void RALExpController_NSNonCompliant::configure(const mc_rtc::Configuration & config) {}
+void RALExpController_NonCompliant::configure(const mc_rtc::Configuration & config) {}
 
-void RALExpController_NSNonCompliant::start(mc_control::fsm::Controller & ctl_)
+void RALExpController_NonCompliant::start(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
 
@@ -25,16 +25,14 @@ void RALExpController_NSNonCompliant::start(mc_control::fsm::Controller & ctl_)
   ctl.compPostureTask->damping(5.0);
   ctl.compPostureTask->weight(1);
 
-  ctl.eeTask->reset();
-  ctl.eeTask->positionTask->weight(100000);
-  ctl.eeTask->positionTask->stiffness(100);
-  ctl.eeTask->positionTask->position(Eigen::Vector3d(0.68, 0.0, 0.45));
-  ctl.eeTask->orientationTask->weight(100000);
-  ctl.eeTask->orientationTask->stiffness(100);
-  ctl.eeTask->orientationTask->orientation(Eigen::Quaterniond(-1, 4, 1, 4).normalized().toRotationMatrix());
-  ctl.solver().addTask(ctl.eeTask);
-
-  ctl.compPostureTask->makeCompliant(false);
+  ctl.compEETask->reset();
+  ctl.compEETask->positionTask->weight(100000);
+  ctl.compEETask->positionTask->stiffness(100);
+  ctl.compEETask->positionTask->position(Eigen::Vector3d(0.68, 0.0, 0.45));
+  ctl.compEETask->orientationTask->weight(100000);
+  ctl.compEETask->orientationTask->stiffness(100);
+  ctl.compEETask->orientationTask->orientation(Eigen::Quaterniond(-1, 4, 1, 4).normalized().toRotationMatrix());
+  ctl.solver().addTask(ctl.compEETask);
 
   ctl.waitingForInput = true;
 
@@ -42,7 +40,7 @@ void RALExpController_NSNonCompliant::start(mc_control::fsm::Controller & ctl_)
   mc_rtc::log::success("[RALExpController] Switched to Sensor Testing state - Position controlled");
 }
 
-bool RALExpController_NSNonCompliant::run(mc_control::fsm::Controller & ctl_)
+bool RALExpController_NonCompliant::run(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
 
@@ -55,9 +53,9 @@ bool RALExpController_NSNonCompliant::run(mc_control::fsm::Controller & ctl_)
   return false;
 }
 
-void RALExpController_NSNonCompliant::teardown(mc_control::fsm::Controller & ctl_)
+void RALExpController_NonCompliant::teardown(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
 }
 
-EXPORT_SINGLE_STATE("RALExpController_NSNonCompliant", RALExpController_NSNonCompliant)
+EXPORT_SINGLE_STATE("RALExpController_NonCompliant", RALExpController_NonCompliant)

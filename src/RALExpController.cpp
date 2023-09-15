@@ -1,3 +1,4 @@
+#include <mc_tasks/CompliantEndEffectorTask.h>
 #include <RALExpController/RALExpController.h>
 
 RALExpController::RALExpController(mc_rbdyn::RobotModulePtr rm, double dt, const mc_rtc::Configuration & config)
@@ -22,7 +23,8 @@ RALExpController::RALExpController(mc_rbdyn::RobotModulePtr rm, double dt, const
   compPostureTask->target(postureTarget);
   solver().addTask(compPostureTask);
 
-  eeTask = std::make_shared<mc_tasks::EndEffectorTask>(robot().frame("tool_frame"));
+  compEETask =
+      std::make_shared<mc_tasks::CompliantEndEffectorTask>("FT_frame", robots(), robot().robotIndex(), 1.0, 10000.0);
 
   postureVelLimit = {{"joint_1", {1.57}}, {"joint_2", {0}}, {"joint_3", {1.57}}, {"joint_4", {-1.57}},
                      {"joint_5", {1.57}}, {"joint_6", {0}}, {"joint_7", {-1.06}}};

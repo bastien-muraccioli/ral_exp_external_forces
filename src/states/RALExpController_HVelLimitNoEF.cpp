@@ -1,11 +1,11 @@
-#include "RALExpController_VelLimitNoEF.h"
+#include "RALExpController_HVelLimitNoEF.h"
 
 #include <mc_tvm/Robot.h>
 #include <RALExpController/RALExpController.h>
 
-void RALExpController_VelLimitNoEF::configure(const mc_rtc::Configuration & config) {}
+void RALExpController_HVelLimitNoEF::configure(const mc_rtc::Configuration & config) {}
 
-void RALExpController_VelLimitNoEF::start(mc_control::fsm::Controller & ctl_)
+void RALExpController_HVelLimitNoEF::start(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
   ctl.solver().removeConstraintSet(ctl.dynamicsConstraint);
@@ -39,33 +39,35 @@ void RALExpController_VelLimitNoEF::start(mc_control::fsm::Controller & ctl_)
   lowerLimit = 0.6 * ctl.robot().tvmRobot().limits().vl[3];
   maxLimitCross_ = 0.0;
 
-  ctl.logger().addLogEntry("VelLimit_NoEf_limit_violated", [this]() {
-    double ret;
-    if(jointVel > upperLimit)
-    {
-      ret = 1.0;
-    }
-    else if(jointVel < lowerLimit)
-    {
-      ret = 1.0;
-    }
-    else
-    {
-      ret = 0.0;
-    }
-    return ret;
-  });
+  ctl.logger().addLogEntry("HVelLimit_NoEf_limit_violated",
+                           [this]()
+                           {
+                             double ret;
+                             if(jointVel > upperLimit)
+                             {
+                               ret = 1.0;
+                             }
+                             else if(jointVel < lowerLimit)
+                             {
+                               ret = 1.0;
+                             }
+                             else
+                             {
+                               ret = 0.0;
+                             }
+                             return ret;
+                           });
 
-  ctl.logger().addLogEntry("VelLimit_NoEf_velocity", [this]() { return this->jointVel; });
-  ctl.logger().addLogEntry("VelLimit_NoEf_upperLimit", [this]() { return this->upperLimit; });
-  ctl.logger().addLogEntry("VelLimit_NoEf_lowerLimit", [this]() { return this->lowerLimit; });
-  ctl.logger().addLogEntry("VelLimit_NoEf_maxLimitCross", [this]() { return this->maxLimitCross_; });
+  ctl.logger().addLogEntry("HVelLimit_NoEf_velocity", [this]() { return this->jointVel; });
+  ctl.logger().addLogEntry("HVelLimit_NoEf_upperLimit", [this]() { return this->upperLimit; });
+  ctl.logger().addLogEntry("HVelLimit_NoEf_lowerLimit", [this]() { return this->lowerLimit; });
+  ctl.logger().addLogEntry("HVelLimit_NoEf_maxLimitCross", [this]() { return this->maxLimitCross_; });
 
   ctl.datastore().assign<std::string>("ControlMode", "Torque");
   mc_rtc::log::success("[RALExpController] Switched to Sensor Testing state - Position controlled");
 }
 
-bool RALExpController_VelLimitNoEF::run(mc_control::fsm::Controller & ctl_)
+bool RALExpController_HVelLimitNoEF::run(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
 
@@ -91,14 +93,14 @@ bool RALExpController_VelLimitNoEF::run(mc_control::fsm::Controller & ctl_)
   return false;
 }
 
-void RALExpController_VelLimitNoEF::teardown(mc_control::fsm::Controller & ctl_)
+void RALExpController_HVelLimitNoEF::teardown(mc_control::fsm::Controller & ctl_)
 {
   auto & ctl = static_cast<RALExpController &>(ctl_);
-  ctl.logger().removeLogEntry("VelLimit_NoEf_limit_violated");
-  ctl.logger().removeLogEntry("VelLimit_NoEf_velocity");
-  ctl.logger().removeLogEntry("VelLimit_NoEf_upperLimit");
-  ctl.logger().removeLogEntry("VelLimit_NoEf_lowerLimit");
-  ctl.logger().removeLogEntry("VelLimit_NoEf_maxLimitCross");
+  ctl.logger().removeLogEntry("HVelLimit_NoEf_limit_violated");
+  ctl.logger().removeLogEntry("HVelLimit_NoEf_velocity");
+  ctl.logger().removeLogEntry("HVelLimit_NoEf_upperLimit");
+  ctl.logger().removeLogEntry("HVelLimit_NoEf_lowerLimit");
+  ctl.logger().removeLogEntry("HVelLimit_NoEf_maxLimitCross");
 }
 
-EXPORT_SINGLE_STATE("RALExpController_VelLimitNoEF", RALExpController_VelLimitNoEF)
+EXPORT_SINGLE_STATE("RALExpController_HVelLimitNoEF", RALExpController_HVelLimitNoEF)

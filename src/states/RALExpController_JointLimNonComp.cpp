@@ -28,7 +28,7 @@ void RALExpController_JointLimNonComp::start(mc_control::fsm::Controller & ctl_)
   ctl.compPostureTask->stiffness(10.0);
   ctl.compPostureTask->target(ctl.postureJointLim);
   ctl.compPostureTask->makeCompliant(false);
-  ctl.solver().removeTask(ctl.eeTask);
+  ctl.solver().removeTask(ctl.compEETask);
 
   elapsedTime_ = 0;
   ctl.jointLimitCounter++;

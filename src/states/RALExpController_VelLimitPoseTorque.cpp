@@ -28,7 +28,7 @@ void RALExpController_VelLimitPoseTorque::start(mc_control::fsm::Controller & ct
   ctl.compPostureTask->stiffness(20.0);
   ctl.compPostureTask->target(ctl.postureVelLimit);
   ctl.compPostureTask->makeCompliant(false);
-  ctl.solver().removeTask(ctl.eeTask);
+  ctl.solver().removeTask(ctl.compEETask);
 
   ctl.datastore().assign<std::string>("ControlMode", "Torque");
   mc_rtc::log::success("[RALExpController] Switched to Sensor Testing state - Position controlled");
