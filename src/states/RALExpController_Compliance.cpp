@@ -35,7 +35,6 @@ void RALExpController_Compliance::start(mc_control::fsm::Controller & ctl_)
   ctl.solver().addTask(ctl.compEETask);
 
   ctl.compPostureTask->makeCompliant(true);
-  ctl.compEETask->makeCompliant(true);
 
   ctl.waitingForInput = true;
 
