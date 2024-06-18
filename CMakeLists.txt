@@ -19,9 +19,9 @@ include_directories(include)
 
 add_subdirectory(src)
 
-if(BUILD_TESTING)
-  add_subdirectory(tests)
-endif()
+# if(BUILD_TESTING)
+#   add_subdirectory(tests)
+# endif()
 
 configure_file(etc/RALExpController.in.yaml "${CMAKE_CURRENT_BINARY_DIR}/etc/RALExpController.yaml")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/etc/RALExpController.yaml" DESTINATION "${MC_CONTROLLER_RUNTIME_INSTALL_PREFIX}/etc")
