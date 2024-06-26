@@ -88,7 +88,7 @@ transitions:
 
 # Initial state
 # init: RALExpController_Initial
-init: RALExp_FSM_Initial
+init: RALExpController_Initial
 
 Plugins: [ PassivityTorqueFeedback, ExternalForcesEstimator ]
 

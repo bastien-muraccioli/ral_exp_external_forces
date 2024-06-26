@@ -39,6 +39,8 @@ struct RALExpController_DLLAPI RALExpController : public mc_control::fsm::Contro
   int currentSequence;
   std::string sequenceOutput;
   bool waitingForInput;
+  Eigen::MatrixXd taskOrientation_; // Rotation Matrix
+  Eigen::Vector3d taskPosition_;
 
 private:
   mc_rtc::Configuration config_;

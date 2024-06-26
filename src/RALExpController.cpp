@@ -4,6 +4,10 @@
 RALExpController::RALExpController(mc_rbdyn::RobotModulePtr rm, double dt, const mc_rtc::Configuration & config)
 : mc_control::fsm::Controller(rm, dt, config, Backend::TVM)
 {
+
+  taskOrientation_ = Eigen::Quaterniond(1,-1,-1,-1).normalized().toRotationMatrix();
+  taskPosition_ = Eigen::Vector3d(0.68, 0.0, 0.45);
+
   // Setup custom dynamic constraints
   dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
       new mc_solver::DynamicsConstraint(robots(), 0, solver().dt(), {0.1, 0.01, 0.5}, 0.9, false, true));
@@ -13,7 +17,7 @@ RALExpController::RALExpController(mc_rbdyn::RobotModulePtr rm, double dt, const
   posture_target_log.setZero(robot().mb().nrJoints());
 
   postureTarget = {{"joint_1", {0}}, {"joint_2", {0.262}}, {"joint_3", {3.14}}, {"joint_4", {-2.269}},
-                   {"joint_5", {0}}, {"joint_6", {0.96}},  {"joint_7", {0.51}}};
+                   {"joint_5", {0}}, {"joint_6", {0.96}},  {"joint_7", {0.54}}};
 
   solver().removeTask(getPostureTask(robot().name()));
   compPostureTask = std::make_shared<mc_tasks::CompliantPostureTask>(solver(), robot().robotIndex(), 1, 1);
@@ -22,8 +26,6 @@ RALExpController::RALExpController(mc_rbdyn::RobotModulePtr rm, double dt, const
   compPostureTask->damping(4.0);
   compPostureTask->target(postureTarget);
   solver().addTask(compPostureTask);
-
-  robot().addDevice(mc_rbdyn::VirtualTorqueSensor("VirtualTorqueSensor2", 7).clone());
 
   compEETask = std::make_shared<mc_tasks::CompliantEndEffectorTask>("FT_sensor_mounting", robots(),
                                                                     robot().robotIndex(), 1.0, 10000.0);
@@ -104,6 +106,7 @@ void RALExpController::reset(const mc_control::ControllerResetData & reset_data)
 {
   mc_control::fsm::Controller::reset(reset_data);
 }
+
 
 void RALExpController::getPostureTarget(void)
 {

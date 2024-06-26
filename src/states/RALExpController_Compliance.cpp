@@ -28,10 +28,10 @@ void RALExpController_Compliance::start(mc_control::fsm::Controller & ctl_)
   ctl.compEETask->reset();
   ctl.compEETask->positionTask->weight(10000);
   ctl.compEETask->positionTask->stiffness(10);
-  ctl.compEETask->positionTask->position(Eigen::Vector3d(0.68, 0.0, 0.45));
+  ctl.compEETask->positionTask->position(ctl.taskPosition_);
   ctl.compEETask->orientationTask->weight(10000);
   ctl.compEETask->orientationTask->stiffness(10);
-  ctl.compEETask->orientationTask->orientation(Eigen::Quaterniond(-1, 4, 1, 4).normalized().toRotationMatrix());
+  ctl.compEETask->orientationTask->orientation(ctl.taskOrientation_);
   ctl.solver().addTask(ctl.compEETask);
 
   ctl.compPostureTask->makeCompliant(true);
