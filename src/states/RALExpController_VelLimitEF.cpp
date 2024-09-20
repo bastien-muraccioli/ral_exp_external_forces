@@ -7,10 +7,21 @@ void RALExpController_VelLimitEF::configure(const mc_rtc::Configuration & config
 
 void RALExpController_VelLimitEF::start(mc_control::fsm::Controller & ctl_)
 {
+  mc_rtc::log::info("[RALExpController] VelLimitEF state started");
   auto & ctl = static_cast<RALExpController &>(ctl_);
   ctl.solver().removeConstraintSet(ctl.dynamicsConstraint);
-  ctl.dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
+  if (ctl.closeLoopVelocityDamper_)
+  {
+    mc_rtc::log::info("[RALExpController] Close Loop Velocity damper is enabled");
+    ctl.dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
+        new mc_solver::DynamicsConstraint(ctl.robots(), 0, {0.1, 0.01, 0.5, ctl.m_, ctl.lambda_}, 0.5, true));
+  }
+  else
+  {
+    mc_rtc::log::info("[RALExpController] Close Loop Velocity damper is disabled");
+    ctl.dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
       new mc_solver::DynamicsConstraint(ctl.robots(), 0, ctl.solver().dt(), {0.1, 0.01, 0.5}, 0.5, false, true));
+  }
   ctl.solver().addConstraintSet(ctl.dynamicsConstraint);
 
   // Deactivate feedback from external forces estimator (safer)
@@ -35,8 +46,8 @@ void RALExpController_VelLimitEF::start(mc_control::fsm::Controller & ctl_)
   ctl.velLimitCounter++;
 
   jointVel = 0.0;
-  upperLimit = 0.6 * ctl.robot().tvmRobot().limits().vu[3];
-  lowerLimit = 0.6 * ctl.robot().tvmRobot().limits().vl[3];
+  upperLimit = 0.5 * ctl.robot().tvmRobot().limits().vu[3];
+  lowerLimit = 0.5 * ctl.robot().tvmRobot().limits().vl[3];
   maxLimitCross_ = 0.0;
 
   ctl.logger().addLogEntry("VelLimit_Ef_limit_violated", [this]() {

@@ -4,15 +4,48 @@
 RALExpController::RALExpController(mc_rbdyn::RobotModulePtr rm, double dt, const mc_rtc::Configuration & config)
 : mc_control::fsm::Controller(rm, dt, config, Backend::TVM)
 {
+  dt_ = dt;
+  xsiOff_ = 0.0;
+  m_ = 2.0;
+  lambda_ = 100.0;
+  //selfCollisionConstraint->setCollisionsDampers(solver(), {m_, lambda_});
+  // Define a minimal set of self-collisions
+  // collisions_ = {{"base_link", "spherical_wrist_1_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"shoulder_link", "spherical_wrist_1_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_1_link", "spherical_wrist_1_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_2_link", "spherical_wrist_1_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"base_link", "spherical_wrist_2_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"shoulder_link", "spherical_wrist_2_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_1_link", "spherical_wrist_2_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_2_link", "spherical_wrist_2_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"base_link", "bracelet_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"shoulder_link", "bracelet_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_1_link", "bracelet_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_2_link", "bracelet_link", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"base_link", "FT_adapter", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"shoulder_link", "FT_adapter", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_1_link", "FT_adapter", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_2_link", "FT_adapter", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"base_link", "FT_sensor_mounting", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"shoulder_link", "FT_sensor_mounting", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_1_link", "FT_sensor_mounting", i_, s_, d_, {}, {}, false, false, m_, lambda_},
+  //               {"half_arm_2_link", "FT_sensor_mounting", i_, s_, d_, {}, {}, false, false, m_, lambda_}};
+  
+  //selfCollisionConstraint->editCollisions(solver(), collisions_);
+  selfCollisionConstraint->setCollisionsDampers(solver(), {m_, lambda_});
+
 
   taskOrientation_ = Eigen::Quaterniond(1,-1,-1,-1).normalized().toRotationMatrix();
   taskPosition_ = Eigen::Vector3d(0.68, 0.0, 0.45);
 
   // Setup custom dynamic constraints
+  // dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
+  //     new mc_solver::DynamicsConstraint(robots(), 0, solver().dt(), {0.1, 0.01, 0.5}, 0.9, false, true));
   dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
-      new mc_solver::DynamicsConstraint(robots(), 0, solver().dt(), {0.1, 0.01, 0.5}, 0.9, false, true));
-
+    new mc_solver::DynamicsConstraint(robots(), 0, {0.1, 0.01, xsiOff_, m_, lambda_}, 0.9, true));
   solver().addConstraintSet(dynamicsConstraint);
+  
+  
 
   posture_target_log.setZero(robot().mb().nrJoints());
 
@@ -46,6 +79,8 @@ RALExpController::RALExpController(mc_rbdyn::RobotModulePtr rm, double dt, const
 
   sequenceOutput = "A";
   waitingForInput = true;
+  velocityDamperFlag_ = true;
+  closeLoopVelocityDamper_ = true;
 
   // For usage on real robot with mc_kortex allows to switch control mode
   datastore().make<std::string>("ControlMode", "Position");
@@ -59,6 +94,19 @@ RALExpController::RALExpController(mc_rbdyn::RobotModulePtr rm, double dt, const
                     mc_rtc::gui::Label("Next state :", [this]() { return this->executor_.next_state(); }));
 
   gui()->addElement({"Controller"}, mc_rtc::gui::Button("Move to next state", [this]() { waitingForInput = false; }));
+
+  gui()->addElement({"Controller"}, mc_rtc::gui::Checkbox("Close Loop Velocity Damper", 
+                    [this]() { return velocityDamperFlag_; }, [this]() { velocityDamperFlag_ = !velocityDamperFlag_; }));
+
+  gui()->addElement({"Controller"}, mc_rtc::gui::NumberInput("m", [this]() { return m_; },
+                    [this](double m) { m_ = m; }));
+  
+  gui()->addElement({"Controller"}, mc_rtc::gui::NumberInput("lambda", [this]() { return lambda_; },
+                    [this](double lambda) { lambda_ = lambda; }));
+
+  gui()->addElement({"Controller"}, mc_rtc::gui::Button("SEND", [this]() { updateConstraints(); }));
+  
+
 
   // Add log entries
   logger().addLogEntry("ControlMode",
@@ -90,6 +138,17 @@ bool RALExpController::run()
 {
   auto ctrl_mode = datastore().get<std::string>("ControlMode");
 
+  if (velocityDamperFlag_ && !closeLoopVelocityDamper_)
+  {
+    updateConstraints(true);
+    closeLoopVelocityDamper_ = true;
+  }
+  else if (!velocityDamperFlag_ && closeLoopVelocityDamper_)
+  {
+    updateConstraints(false);
+    closeLoopVelocityDamper_ = false;
+  }
+
   if(ctrl_mode.compare("Position") == 0)
   {
     return mc_control::fsm::Controller::run(mc_solver::FeedbackType::OpenLoop);
@@ -111,4 +170,64 @@ void RALExpController::reset(const mc_control::ControllerResetData & reset_data)
 void RALExpController::getPostureTarget(void)
 {
   posture_target_log = rbd::dofToVector(robot().mb(), compPostureTask->posture());
+}
+
+void RALExpController::updateConstraints(bool closeLoop)
+{
+  if(closeLoop)
+  {
+    solver().removeConstraintSet(dynamicsConstraint);
+    dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
+    new mc_solver::DynamicsConstraint(robots(), 0, {0.1, 0.01, xsiOff_, m_, lambda_}, 0.9, true));
+    solver().addConstraintSet(dynamicsConstraint);
+    updateCollisions(m_, lambda_);
+
+    mc_rtc::log::info("[RALExpController] Close Loop Velocity damper is enabled");
+  }
+  else
+  {
+    solver().removeConstraintSet(dynamicsConstraint);
+    dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
+      new mc_solver::DynamicsConstraint(robots(), 0, dt_, {0.1, 0.01, 0.5}, 0.9, false, true));
+    solver().addConstraintSet(dynamicsConstraint);
+    updateCollisions(0.0, 0.0);
+
+    mc_rtc::log::info("[RALExpController] Close Loop Velocity damper is deactivated");
+  }
+}
+
+void RALExpController::updateConstraints(void)
+{
+    if(m_ < 1.0 || lambda_ < 1.0)
+    {
+      solver().removeConstraintSet(dynamicsConstraint);
+      dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
+        new mc_solver::DynamicsConstraint(robots(), 0, dt_, {0.1, 0.01, 0.5}, 0.9, false, true));
+      solver().addConstraintSet(dynamicsConstraint);
+      updateCollisions(0.0, 0.0);
+      velocityDamperFlag_ = false;
+      closeLoopVelocityDamper_ = false;
+    }
+    else // Close loop velocity damper
+    {
+      solver().removeConstraintSet(dynamicsConstraint);
+      dynamicsConstraint = mc_rtc::unique_ptr<mc_solver::DynamicsConstraint>(
+        new mc_solver::DynamicsConstraint(robots(), 0, {0.1, 0.01, xsiOff_, m_, lambda_}, 0.9, true));
+      solver().addConstraintSet(dynamicsConstraint);
+      updateCollisions(m_, lambda_);
+      velocityDamperFlag_ = true;
+      closeLoopVelocityDamper_ = true;
+    }
+    mc_rtc::log::info("[RALExpController] Constraints updated");
+}
+
+void RALExpController::updateCollisions(double m, double lambda)
+{
+  // for(auto & col : collisions_)
+  // {
+  //   col.overDamping = m;
+  //   col.lambda = lambda;
+  // }
+  //selfCollisionConstraint->editCollisions(solver(), collisions_);
+  selfCollisionConstraint->setCollisionsDampers(solver(), {m, lambda});
 }

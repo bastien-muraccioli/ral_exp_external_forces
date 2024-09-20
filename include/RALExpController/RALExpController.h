@@ -4,6 +4,7 @@
 #include <mc_rbdyn/VirtualTorqueSensor.h>
 #include <mc_tasks/CompliantEndEffectorTask.h>
 #include <mc_tasks/CompliantPostureTask.h>
+#include <mc_rbdyn/Collision.h>
 
 #include <RALExpController/api.h>
 
@@ -17,6 +18,12 @@ struct RALExpController_DLLAPI RALExpController : public mc_control::fsm::Contro
   bool run() override;
 
   void reset(const mc_control::ControllerResetData & reset_data) override;
+
+  void updateConstraints(bool closeLoop);
+
+  void updateConstraints(void);
+
+  void updateCollisions(double m, double lambda);
 
   std::shared_ptr<mc_tasks::CompliantPostureTask> compPostureTask;
   std::shared_ptr<mc_tasks::CompliantEndEffectorTask> compEETask;
@@ -41,9 +48,19 @@ struct RALExpController_DLLAPI RALExpController : public mc_control::fsm::Contro
   bool waitingForInput;
   Eigen::MatrixXd taskOrientation_; // Rotation Matrix
   Eigen::Vector3d taskPosition_;
+  double m_;
+  double lambda_;
+  bool closeLoopVelocityDamper_;
 
 private:
   mc_rtc::Configuration config_;
+  std::vector<mc_rbdyn::Collision> collisions_;
   void getPostureTarget(void);
   int stateIndex_;
+  bool velocityDamperFlag_;
+  double dt_;
+  double xsiOff_;
+  const double i_ = 0.03;
+  const double s_ = 0.015;
+  const double d_ = 0.0;
 };

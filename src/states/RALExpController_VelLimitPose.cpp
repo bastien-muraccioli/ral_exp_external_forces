@@ -25,7 +25,7 @@ void RALExpController_VelLimitPose::start(mc_control::fsm::Controller & ctl_)
   ctl.datastore().call<void, double>("EF_Estimator::setGain", HIGH_RESIDUAL_GAIN);
 
   // Setting gain of posture task for torque control mode
-  ctl.compPostureTask->stiffness(0.2);
+  ctl.compPostureTask->stiffness(0.1);
   ctl.compPostureTask->target(ctl.postureVelLimit);
   ctl.compPostureTask->makeCompliant(false);
   ctl.solver().removeTask(ctl.compEETask);
